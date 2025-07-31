@@ -1,5 +1,5 @@
 use crate::token::Token;
-use crate::helper::Type;
+use crate::helper::Value;
 
 pub struct Lexer {
     src: Vec<char>, // Source code as a vector of characters
@@ -154,28 +154,9 @@ impl Lexer {
         }
     }
 
-    fn read_string(&mut self) -> Token {
-        let mut result = String::new();
-        while let Some(c) = self.peek() {
-            if c == '"' {
-                self.advance(); // consume the closing quote
-                return Token::CQuote; // Return a closing quote token
-            } else if c == '\\' {
-                // Handle escape sequences
-                self.advance(); // consume the backslash
-                if let Some(escaped_char) = self.advance() {
-                    result.push(escaped_char);
-                }
-            } else {
-                result.push(self.advance().unwrap());
-            }
-        }
-        Token::Illegal('"') // If we reach here, it means we didn't find a closing quote
-    }
-
     fn read_identifier(&mut self) -> Token {
         let mut identifier = String::new();
-        let mut value: Option<Type> = None;
+        let mut value: Option<Value> = None;
         // get the name of the var
         while let Some(c) = self.peek() {
             if c.is_alphanumeric() || c == '_' {
@@ -190,27 +171,63 @@ impl Lexer {
             self.advance(); // consume '='
             self.skip_whitespace();
             if let Some(c) = self.peek() {
+                // if the value is a digit it must be int, float, or illegal
                 if c.is_ascii_digit() {
                     let first_digit = self.advance().unwrap();
                     let num_token = self.read_number(first_digit);
                     match num_token {
-                        Token::Number(n) => value = Some(Type::Int(n)),
-                        Token::Float(f) => value = Some(Type::Float(f)),
+                    Token::Number(n) => value = Some(Value::Int(n)),
+                    Token::Float(f) => value = Some(Value::Float(f)),
+                    _ => return Token::Illegal('='),
+                    }
+                // it it's a opening quote, it must be a string or illegal
+                } else if c == '"' {
+                    self.advance(); // consume opening quote
+                    let mut string_val = String::new();
+                    while let Some(ch) = self.peek() {
+                    if ch == '"' {
+                        self.advance(); // consume closing quote
+                        break;
+                    } else if ch == '\\' {
+                        self.advance(); // consume backslash
+                        if let Some(escaped_char) = self.advance() {
+                        string_val.push(escaped_char);
+                        }
+                    } else {
+                        string_val.push(self.advance().unwrap());
+                    }
+                    }
+                    value = Some(Value::Str(string_val));
+                
+                // if it's a t or f, it must be a bool or illegal
+                } else if c == 't' || c == 'f' {
+                    let mut bool_val = String::new();
+                    while let Some(ch) = self.peek() {
+                        if ch.is_alphanumeric() {
+                            bool_val.push(self.advance().unwrap());
+                        } else {
+                            break;
+                        }
+                    }
+                    match bool_val.as_str() {
+                        "true" => value = Some(Value::Bool(true)),
+                        "false" => value = Some(Value::Bool(false)),
                         _ => return Token::Illegal('='),
                     }
+
                 } else if c.is_alphabetic() || c == '_' {
                     let _ = self.advance();
                     let identifier_token = self.read_identifier();
                     if let Token::Identifier { value: Some(val), .. } = identifier_token {
-                        value = Some(val);
+                    value = Some(val);
                     } else {
-                        return Token::Illegal('='); // Illegal identifier
+                    return Token::Illegal('='); // Illegal identifier
                     }
                 } else {
                     return Token::Illegal(c); // Illegal character after '='
                 }
             } else {
-                return Token::Illegal('='); // No value after '='
+            return Token::Illegal('='); // No value after '='
             }
         }
         Token::Identifier { name: identifier, value }

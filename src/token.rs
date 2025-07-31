@@ -1,4 +1,4 @@
-use crate::helper::Type;
+use crate::helper::Value;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
@@ -15,7 +15,7 @@ pub enum Token {
     // Keywords and identifiers
     Identifier {
         name: String,
-        value: Option<Type>,
+        value: Option<Value>,
     },
 
 

@@ -27,9 +27,10 @@ pub fn precedence(tok: &Token) -> Precedence {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Type {
+pub enum Value {
     Int(i64),
     Float(f64),
     Str(String),
+    Bool(bool),
 }
 

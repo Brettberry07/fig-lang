@@ -1,4 +1,5 @@
 mod evalulator;
+mod enviorment;
 mod helper;
 mod lexer;
 mod parser;
@@ -9,7 +10,7 @@ use parser::Parser;
 use evalulator::eval;
 
 fn main() {
-    let input = "var num = \"hello world\";";
+    let input = "var is_cool = false;";
     let lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer);
 
