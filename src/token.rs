@@ -5,6 +5,7 @@ pub enum Token {
     Plus, Minus, Star, Slash,
 
     Number(i64),
+    Float(f64),
 
     // Special
     EOF,           // End of file

@@ -46,6 +46,11 @@ impl Parser {
                 self.advance();
                 expr
             }
+            Token::Float(f) => {
+                let expr = Expr::Float(*f);
+                self.advance();
+                expr
+            }
             Token::LParen => {
                 self.advance();
                 let expr = self.parse_expression(Precedence::Lowest);

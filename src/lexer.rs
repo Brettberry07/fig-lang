@@ -68,14 +68,36 @@ impl Lexer {
     // we read a number, which can be multiple digits.
     // We continue reading digits until we hit a non-digit character.
     fn read_number(&mut self, first: char) -> Token {
+        let mut is_float = false;
         let mut result = first.to_string();
         while let Some(c) = self.peek() {
             if c.is_ascii_digit() {
                 result.push(self.advance().unwrap());
             } else {
-                break;
+                if c == '.' {
+                    if is_float {
+                        // If we already saw a dot, this is an illegal number
+                        return Token::Illegal(c);
+                    }
+                    is_float = true;
+                    result.push(self.advance().unwrap());
+                    while let Some(d) = self.peek() {
+                        if d.is_ascii_digit() {
+                            result.push(self.advance().unwrap());
+                        } else {
+                            break;
+                        }
+                    }
+                    return Token::Float(result.parse::<f64>().unwrap());
+                } else {
+                    break;
+                }
             }
         }
-        Token::Number(result.parse::<i64>().unwrap())
+        if is_float {
+            Token::Float(result.parse::<f64>().unwrap())
+        } else {
+            Token::Number(result.parse::<i64>().unwrap())
+        }
     }
 }

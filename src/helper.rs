@@ -3,6 +3,7 @@ use crate::token::Token;
 #[derive(Debug)]
 pub enum Expr {
     Number(i64),
+    Float(f64),
     Binary {
         left: Box<Expr>,
         op: Token,

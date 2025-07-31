@@ -9,8 +9,9 @@ use parser::Parser;
 use evalulator::eval;
 
 fn main() {
-    let input = "4 + 2 * (3 - 1) / 2";
-
+    let input = "
+        4.2 + 2 * 3  - (1 + 2.5) / 2
+    ";
     let lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer);
 

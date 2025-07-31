@@ -4,6 +4,7 @@ use crate::helper::Expr;
 pub fn eval(expr: &Expr) -> f64 {
     match expr {
         Expr::Number(n) => *n as f64,
+        Expr::Float(f) => *f,
         Expr::Binary { left, op, right } => {
             let left_val = eval(left);
             let right_val = eval(right);
