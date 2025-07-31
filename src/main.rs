@@ -9,9 +9,7 @@ use parser::Parser;
 use evalulator::eval;
 
 fn main() {
-    let input = "
-         5 +- 2
-    ";
+    let input = "var num = \"hello world\";";
     let lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer);
 

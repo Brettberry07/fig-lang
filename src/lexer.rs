@@ -1,4 +1,5 @@
 use crate::token::Token;
+use crate::helper::Type;
 
 pub struct Lexer {
     src: Vec<char>, // Source code as a vector of characters
@@ -73,14 +74,45 @@ impl Lexer {
             }
             Some('*') => Token::Star,
             Some('/') => Token::Slash,
+            Some('=') => Token::Equal,
+            Some(';') => Token::Semicolon,
             Some(c) if c.is_ascii_digit() => self.read_number(c),
             None => Token::EOF,
-            Some(c) => Token::Illegal(c),
+            Some(c) => {
+                if c.is_alphanumeric() && c == 'v' {
+                    if self.peek() == Some('a') && self.peek_next() == Some('r') {
+                        // This is the start of a variable declaration
+                        self.advance(); // consume 'a'
+                        self.advance(); // consume 'r'
+                        self.skip_whitespace(); // skip any whitespace after 'var'
+                        if let Some(c) = self.peek() {
+                            if c.is_alphanumeric() || c == '_' {
+                                // Read the identifier for the variable
+                                let identifier = self.read_identifier();
+                                return identifier;
+                            } else {
+                                // If the next character is not valid for an identifier, it's illegal
+                                return Token::Illegal(c);
+                            }
+                        } else {
+                            // If we reached the end of input after 'var', it's illegal
+                            return Token::Illegal('v');
+                        }
+                    } else {
+                        // This is just a regular identifier
+                        let identifier = self.read_identifier();
+                        return identifier;
+                    }
+                } else {
+                    // If not alphanumeric or not 'v', return Illegal token
+                    Token::Illegal(c)
+                }
+            },
         }
     }
 
     // we read a number, which can be multiple digits.
-    // We continue reading digits until we hit a non-digit character.
+    // If it has a decimal point, we treat it as a float.
     fn read_number(&mut self, first: char) -> Token {
         let mut is_float = false;
         let mut result = first.to_string();
@@ -99,8 +131,9 @@ impl Lexer {
                         if d.is_ascii_digit() {
                             result.push(self.advance().unwrap());
                         } else {
-                            if d.is_whitespace() {
+                            if d.is_whitespace() || d == ';' {
                                 // If we hit whitespace, we stop reading the number
+                                // if we hit a semicolon, we also stop reading the number
                                 break;
                             } else {
                                 // If we hit a non-digit, non-whitespace character, it's illegal
@@ -119,5 +152,67 @@ impl Lexer {
         } else {
             Token::Number(result.parse::<i64>().unwrap())
         }
+    }
+
+    fn read_string(&mut self) -> Token {
+        let mut result = String::new();
+        while let Some(c) = self.peek() {
+            if c == '"' {
+                self.advance(); // consume the closing quote
+                return Token::CQuote; // Return a closing quote token
+            } else if c == '\\' {
+                // Handle escape sequences
+                self.advance(); // consume the backslash
+                if let Some(escaped_char) = self.advance() {
+                    result.push(escaped_char);
+                }
+            } else {
+                result.push(self.advance().unwrap());
+            }
+        }
+        Token::Illegal('"') // If we reach here, it means we didn't find a closing quote
+    }
+
+    fn read_identifier(&mut self) -> Token {
+        let mut identifier = String::new();
+        let mut value: Option<Type> = None;
+        // get the name of the var
+        while let Some(c) = self.peek() {
+            if c.is_alphanumeric() || c == '_' {
+                identifier.push(self.advance().unwrap());
+            } else {
+                break;
+            }
+        }
+        // get the value of the var
+        self.skip_whitespace();
+        if self.peek() == Some('=') {
+            self.advance(); // consume '='
+            self.skip_whitespace();
+            if let Some(c) = self.peek() {
+                if c.is_ascii_digit() {
+                    let first_digit = self.advance().unwrap();
+                    let num_token = self.read_number(first_digit);
+                    match num_token {
+                        Token::Number(n) => value = Some(Type::Int(n)),
+                        Token::Float(f) => value = Some(Type::Float(f)),
+                        _ => return Token::Illegal('='),
+                    }
+                } else if c.is_alphabetic() || c == '_' {
+                    let _ = self.advance();
+                    let identifier_token = self.read_identifier();
+                    if let Token::Identifier { value: Some(val), .. } = identifier_token {
+                        value = Some(val);
+                    } else {
+                        return Token::Illegal('='); // Illegal identifier
+                    }
+                } else {
+                    return Token::Illegal(c); // Illegal character after '='
+                }
+            } else {
+                return Token::Illegal('='); // No value after '='
+            }
+        }
+        Token::Identifier { name: identifier, value }
     }
 }
