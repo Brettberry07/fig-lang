@@ -13,7 +13,12 @@ pub fn eval(expr: &Expr) -> f64 {
                 Token::Plus => left_val + right_val,
                 Token::Minus => left_val - right_val,
                 Token::Star => left_val * right_val,
-                Token::Slash => left_val / right_val,
+                Token::Slash => {
+                    if right_val == 0.0 {
+                        panic!("Division by zero");
+                    }
+                    left_val / right_val
+                },
                 _ => panic!("Unknown operator in expression"),
             }
         }

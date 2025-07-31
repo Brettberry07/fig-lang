@@ -99,7 +99,13 @@ impl Lexer {
                         if d.is_ascii_digit() {
                             result.push(self.advance().unwrap());
                         } else {
-                            break;
+                            if d.is_whitespace() {
+                                // If we hit whitespace, we stop reading the number
+                                break;
+                            } else {
+                                // If we hit a non-digit, non-whitespace character, it's illegal
+                                return Token::Illegal(d);
+                            }
                         }
                     }
                     return Token::Float(result.parse::<f64>().unwrap());
