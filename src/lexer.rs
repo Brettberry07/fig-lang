@@ -19,6 +19,11 @@ impl Lexer {
         self.src.get(self.pos).copied()
     }
 
+    // Like peek, but looks at the next next character instead
+    fn peek_next(&self) -> Option<char> {
+        self.src.get(self.pos + 1).copied()
+    }
+
     // Advance to the next character and return it.
     // Returns None if at the end of input.
     fn advance(&mut self) -> Option<char> {
@@ -50,67 +55,14 @@ impl Lexer {
         match ch {
             Some('(') => Token::LParen,
             Some(')') => Token::RParen,
-            Some('{') => Token::LBrace,
-            Some('}') => Token::RBrace,
-            Some(';') => Token::Semicolon,
-            Some(':') => Token::Colon,
-            Some(',') => Token::Comma,
             Some('+') => Token::Plus,
-            Some('-') => {
-                if self.peek() == Some('>') {
-                    self.advance();
-                    Token::Arrow
-                } else {
-                    Token::Minus
-                }
-            }
+            Some('-') => Token::Minus,
             Some('*') => Token::Star,
             Some('/') => Token::Slash,
-            Some('=') => {
-                if self.peek() == Some('=') {
-                    self.advance();
-                    Token::DoubleEqual
-                } else {
-                    Token::Equal
-                }
-            }
-            Some('!') => {
-                if self.peek() == Some('=') {
-                    self.advance();
-                    Token::NotEqual
-                } else {
-                    Token::Illegal('!')
-                }
-            }
-            Some('"') => self.read_string(),
-            Some('\'') => self.read_char(),
             Some(c) if c.is_ascii_digit() => self.read_number(c),
-            Some(c) if Self::is_ident_start(c) => self.read_identifier(c),
             None => Token::EOF,
             Some(c) => Token::Illegal(c),
         }
-    }
-
-    // we collect the chars until we find a closing quote.
-    fn read_string(&mut self) -> Token {
-        let mut result = String::new();
-        while let Some(c) = self.advance() {
-            if c == '"' {
-                break;
-            }
-            result.push(c);
-        }
-        Token::StringLiteral(result)
-    }
-
-    // we read a single character literal, expecting it to be surrounded by single quotes.
-    // If the closing quote is missing, we return an Illegal token.
-    fn read_char(&mut self) -> Token {
-        let c = self.advance();
-        if self.advance() != Some('\'') {
-            return Token::Illegal('\'');
-        }
-        Token::CharLiteral(c.unwrap_or('\0'))
     }
 
     // we read a number, which can be multiple digits.
@@ -125,45 +77,5 @@ impl Lexer {
             }
         }
         Token::Number(result.parse::<i64>().unwrap())
-    }
-
-    // we read an identifier, which can start with a letter or underscore,
-    // and can contain letters, digits, and underscores.
-
-    fn read_identifier(&mut self, first: char) -> Token {
-        let mut ident = first.to_string();
-        while let Some(c) = self.peek() {
-            if Self::is_ident_char(c) {
-                ident.push(self.advance().unwrap());
-            } else {
-                break;
-            }
-        }
-
-        match ident.as_str() {
-            "fn" => Token::Fn,
-            "var" => Token::Var,
-            "type" => Token::Type,
-            "if" => Token::If,
-            "else" => Token::Else,
-            "for" => Token::For,
-            "while" => Token::While,
-            "return" => Token::Return,
-            "null" => Token::Null,
-            "true" => Token::True,
-            "false" => Token::False,
-            "int" | "str" | "bool" | "float" => Token::TypeName(ident),
-            _ => Token::Identifier(ident),
-        }
-    }
-
-    // Check if a character can start an identifier (letter or underscore).
-    fn is_ident_start(c: char) -> bool {
-        c.is_ascii_alphabetic() || c == '_'
-    }
-
-    // Check if a character can be part of an identifier (letter, digit, or underscore).
-    fn is_ident_char(c: char) -> bool {
-        c.is_ascii_alphanumeric() || c == '_'
     }
 }

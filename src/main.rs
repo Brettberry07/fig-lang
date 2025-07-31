@@ -1,22 +1,20 @@
+mod evalulator;
+mod helper;
 mod lexer;
+mod parser;
 mod token;
 
 use lexer::Lexer;
+use parser::Parser;
+use evalulator::eval;
 
 fn main() {
-    let input = r#"
-        var x4: int = 42;
-        fn greet(name: str) -> str {
-            return "hello ${name}";
-        }
-    "#;
+    let input = "4 + 2 * (3 - 1) / 2";
 
-    let mut lexer = Lexer::new(input);
-    loop {
-        let tok = lexer.next_token();
-        println!("{:?}", tok);
-        if matches!(tok, token::Token::EOF) {
-            break;
-        }
-    }
+    let lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
+
+    let expr = parser.parse();
+    let result = eval(&expr);
+    println!("{:#?}", result);
 }
