@@ -229,6 +229,8 @@ impl Lexer {
             } else {
             return Token::Illegal('='); // No value after '='
             }
+        } else {
+            return Token::Identifier { name: identifier, value: Some(Value::Null) };
         }
         Token::Identifier { name: identifier, value }
     }

@@ -32,5 +32,6 @@ pub enum Value {
     Float(f64),
     Str(String),
     Bool(bool),
+    Null,
 }
 

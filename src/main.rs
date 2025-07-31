@@ -10,7 +10,7 @@ use parser::Parser;
 use evalulator::eval;
 
 fn main() {
-    let input = "var is_cool = false;";
+    let input = "var is_cool;";
     let lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer);
 
