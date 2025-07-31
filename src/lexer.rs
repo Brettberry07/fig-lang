@@ -114,8 +114,8 @@ impl Lexer {
     // we read a number, which can be multiple digits.
     // If it has a decimal point, we treat it as a float.
     fn read_number(&mut self, first: char) -> Token {
-        let mut is_float = false;
         let mut result = first.to_string();
+        let mut is_float = false;
         while let Some(c) = self.peek() {
             if c.is_ascii_digit() {
                 result.push(self.advance().unwrap());
@@ -123,6 +123,7 @@ impl Lexer {
                 if c == '.' {
                     if is_float {
                         // If we already saw a dot, this is an illegal number
+                        println!("Illegal number: multiple decimal points");
                         return Token::Illegal(c);
                     }
                     is_float = true;
@@ -156,7 +157,7 @@ impl Lexer {
 
     fn read_identifier(&mut self) -> Token {
         let mut identifier = String::new();
-        let mut value: Option<Value> = None;
+        let value: Option<Value>;
         // get the name of the var
         while let Some(c) = self.peek() {
             if c.is_alphanumeric() || c == '_' {
