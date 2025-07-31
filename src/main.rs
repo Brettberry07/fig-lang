@@ -10,7 +10,7 @@ use evalulator::eval;
 
 fn main() {
     let input = "
-        4.2 + 2 * 3  - (1 + 2.5) / 2
+        -2.53 + 3
     ";
     let lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer);

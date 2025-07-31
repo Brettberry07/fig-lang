@@ -56,7 +56,21 @@ impl Lexer {
             Some('(') => Token::LParen,
             Some(')') => Token::RParen,
             Some('+') => Token::Plus,
-            Some('-') => Token::Minus,
+            Some('-') => {
+                match self.peek() {
+                    Some(c) if c.is_ascii_digit() => {
+                        // Negative number: parse as number with '-' prefix
+                        let next_digit = self.advance().unwrap();
+                        let num_token = self.read_number(next_digit);
+                        match num_token {
+                            Token::Number(n) => Token::Number(-n),
+                            Token::Float(f) => Token::Float(-f),
+                            other => other,
+                        }
+                    }
+                    _ => Token::Minus,
+                }
+            }
             Some('*') => Token::Star,
             Some('/') => Token::Slash,
             Some(c) if c.is_ascii_digit() => self.read_number(c),
