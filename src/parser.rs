@@ -1,6 +1,6 @@
 use crate::lexer::Lexer;
 use crate::token::Token;
-use crate::helper::{Expr, Precedence, precedence};
+use crate::helper::{Expr, Stmt, Precedence, precedence};
 
 pub struct Parser {
     lexer: Lexer,
@@ -11,34 +11,67 @@ pub struct Parser {
 impl Parser {
     pub fn new(mut lexer: Lexer) -> Self {
         let current = lexer.next_token();
-        let next = lexer.next_token();
+        let next    = lexer.next_token();
         Parser { lexer, current, next }
     }
 
-    // advance the parser to the next token
     fn advance(&mut self) {
         self.current = std::mem::replace(&mut self.next, self.lexer.next_token());
     }
 
-    // This function parses an expression based on the current token and precedence level.
-    // It supports numbers, parentheses, and binary operations, recursively building an expression tree.
-    //
-    // The parser uses a technique called "precedence climbing" to respect operator precedence.
-    // This means that if it encounters an operator with higher precedence, it will parse the right-hand
-    // side expression first before completing the current one.
-    //
-    // The function returns an `Expr` enum representing the entire expression tree.
-    // 
-    // Parsing continues until one of two things happens:
-    // - The end of the file (EOF) is reached.
-    // - A token with lower precedence than the current operation is encountered.
-    //   In this case, the function returns early to ensure the higher precedence operation is grouped correctly.
-    //
-    // Example: For `4 + 2 * 3 - 1`:
-    // - It parses `4 +`, sees `*` has higher precedence than `+`, so it recursively parses `2 * 3`.
-    // - Once `*` is done, it returns and finishes the `4 + (2 * 3)` part.
-    // - It then continues with `- 1`, giving the correct final parse tree.
+    /// Parses a single statement (either `var x = …;` or an expression-stmt like `x + 2;`)
+    pub fn parse_stmt(&mut self) -> Stmt {
+        println!("Parsing token: {:?}", self.current);
+        match &self.current {
+            Token::Var => {
+                // var-declaration
+                self.advance(); // consume 'var'
+                println!("Should be identifier now: {:?}", self.current);
 
+
+                // expect identifier
+                let name = if let Token::Identifier { name } = self.current.clone() {
+                    name
+                } else {
+                    panic!("Expected identifier after 'var', got {:?}", self.current);
+                };
+                self.advance(); // consume the identifier
+                println!("Should be = now: {:?}", self.current);
+
+                // expect '='
+                if self.current != Token::Equal {
+                    panic!("Expected '=' after variable name, got {:?}", self.current);
+                }
+                self.advance(); // consume '='
+
+                // parse the initializer expression
+                let value = self.parse_expression(Precedence::Lowest);
+                println!("The value {:?}", value);
+
+                // expect semicolon
+                if self.current != Token::Semicolon {
+                    panic!("Expected ';' after var declaration, got {:?}", self.current);
+                }
+                self.advance(); // consume ';'
+
+                Stmt::VarDecl { name, value }
+            }
+
+            _ => {
+                // expression statement
+                let expr = self.parse_expression(Precedence::Lowest);
+
+                // expect semicolon
+                if self.current != Token::Semicolon {
+                    panic!("Expected ';' after expression, got {:?}", self.current);
+                }
+                self.advance(); // consume ';'
+                Stmt::ExprStmt(expr)
+            }
+        }
+    }
+
+    /// Parses an expression with precedence climbing (unchanged from your version)
     pub fn parse_expression(&mut self, prec: Precedence) -> Expr {
         let mut left = match &self.current {
             Token::Number(n) => {
@@ -55,14 +88,20 @@ impl Parser {
                 self.advance();
                 let expr = self.parse_expression(Precedence::Lowest);
                 if self.current != Token::RParen {
-                    panic!("Expected closing paren");
+                    panic!("Expected closing parenthesis, got {:?}", self.current);
                 }
                 self.advance();
                 expr
             }
-            _ => panic!("Unexpected token: {:?}", self.current),
+            Token::Identifier { name } => {
+                let expr = Expr::Var(name.clone());
+                self.advance();
+                expr
+            }
+            other => panic!("Unexpected token in expression: {:?}", other),
         };
 
+        // precedence loop
         while self.current != Token::EOF && precedence(&self.current) > prec {
             let op = self.current.clone();
             self.advance();
@@ -76,11 +115,14 @@ impl Parser {
 
         left
     }
-}
 
-impl Parser {
-    pub fn parse(&mut self) -> Expr {
-        self.parse_expression(Precedence::Lowest)
+    /// Parse a *program* (zero or more statements) until EOF
+    pub fn parse(&mut self) -> Vec<Stmt> {
+        let mut stmts = Vec::new();
+        while self.current != Token::EOF {
+            stmts.push(self.parse_stmt());
+        }
+        println!("Finished parsing, stmts: {:?}", stmts);
+        stmts
     }
 }
-

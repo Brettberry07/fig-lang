@@ -11,11 +11,11 @@ pub enum Token {
 
     Number(i64),
     Float(f64),
+    Var, // Variable declaration keyword
 
     // Keywords and identifiers
     Identifier {
         name: String,
-        value: Option<Value>,
     },
 
 

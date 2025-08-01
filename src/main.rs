@@ -7,14 +7,20 @@ mod token;
 
 use lexer::Lexer;
 use parser::Parser;
-use evalulator::eval;
+use evalulator::eval_program;
 
 fn main() {
-    let input = "var x = 5;";
+    let input = "
+    var x = 5;
+    var y = 10;
+    var z = x + y;
+    var result = z * 2;
+    result - 5;
+    ";
     let lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer);
 
-    let expr = parser.parse();
-    let result = eval(&expr);
+    let stmts = parser.parse();
+    let result = eval_program(&stmts);
     println!("{:#?}", result);
 }
