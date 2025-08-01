@@ -12,6 +12,7 @@ pub enum Token {
     Number(i64),
     Float(f64),
     String(String),
+    Bool(bool),
     Var, // Variable declaration keyword
 
     // Keywords and identifiers

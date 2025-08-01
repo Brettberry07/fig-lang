@@ -8,6 +8,7 @@ fn eval_expr(expr: &Expr, env: &Environment) -> Type {
         Expr::Number(n) => Type::Int(*n),
         Expr::Float(f)  => Type::Float(*f),
         Expr::String(s) => Type::Str(s.clone()),
+        Expr::Bool(b) => Type::Bool(*b),
         Expr::Var(name) => env.get(name),
         Expr::Binary { left, op, right } => {
             let l = eval_expr(left, env);

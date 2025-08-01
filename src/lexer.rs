@@ -86,6 +86,9 @@ impl Lexer {
                         Token::Identifier { name, .. } if name == "var" => Token::Var,
                         _ => identifier,
                     }
+                } else if c == 't' || c == 'f' {
+                    // Boolean literals
+                    self.read_bool()
                 } else {
                     // If we reach here, it's an illegal character
                     Token::Illegal(c)
@@ -155,6 +158,23 @@ impl Lexer {
         }
         // If we reach here, it means the string was not properly closed
         Token::Illegal('"')
+    }
+
+    fn read_bool(&mut self) -> Token {
+        let mut bool_val = String::new();
+        let current = self.src[self.pos - 1]; // Start with the first character
+        while let Some(c) = self.peek() {
+            if c.is_alphabetic() {
+                bool_val.push(self.advance().unwrap());
+            } else {
+                break;
+            }
+        }
+        match bool_val.as_str() {
+            "true" => Token::Bool(true),
+            "false" => Token::Bool(false),
+            _ => Token::Illegal(current), // Illegal boolean value
+        }
     }
 
     fn read_identifier(&mut self) -> Token {

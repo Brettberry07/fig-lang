@@ -89,6 +89,11 @@ impl Parser {
                 self.advance();
                 expr
             }
+            Token::Bool(b) => {
+                let expr = Expr::Bool(*b);
+                self.advance();
+                expr
+            }
             Token::LParen => {
                 self.advance();
                 let expr = self.parse_expression(Precedence::Lowest);

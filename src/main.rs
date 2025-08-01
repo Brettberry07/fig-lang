@@ -11,12 +11,14 @@ use evalulator::eval_program;
 
 fn main() {
     let input = "
-    var x = 5;
+    var x = 5.12;
     var y = 10;
     var s = \"Hello, World!\";
+    var b = true;
+    var n = false;
     var z = x + y;
+    z + x;
     var result = z * 2;
-    result - 5;
     ";
     let lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer);
