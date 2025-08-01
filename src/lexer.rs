@@ -1,4 +1,5 @@
 use crate::token::Token;
+use crate::helper::Value;
 
 pub struct Lexer {
     src: Vec<char>, // Source code as a vector of characters
@@ -17,6 +18,11 @@ impl Lexer {
     // Returns None if at the end of input.
     fn peek(&self) -> Option<char> {
         self.src.get(self.pos).copied()
+    }
+
+    // Like peek, but looks at the next next character instead
+    fn peek_next(&self) -> Option<char> {
+        self.src.get(self.pos + 1).copied()
     }
 
     // Advance to the next character and return it.
@@ -50,120 +56,181 @@ impl Lexer {
         match ch {
             Some('(') => Token::LParen,
             Some(')') => Token::RParen,
-            Some('{') => Token::LBrace,
-            Some('}') => Token::RBrace,
-            Some(';') => Token::Semicolon,
-            Some(':') => Token::Colon,
-            Some(',') => Token::Comma,
             Some('+') => Token::Plus,
             Some('-') => {
-                if self.peek() == Some('>') {
-                    self.advance();
-                    Token::Arrow
-                } else {
-                    Token::Minus
+                match self.peek() {
+                    Some(c) if c.is_ascii_digit() => {
+                        // Negative number: parse as number with '-' prefix
+                        let next_digit = self.advance().unwrap();
+                        let num_token = self.read_number(next_digit);
+                        match num_token {
+                            Token::Number(n) => Token::Number(-n),
+                            Token::Float(f) => Token::Float(-f),
+                            other => other,
+                        }
+                    }
+                    _ => Token::Minus,
                 }
             }
             Some('*') => Token::Star,
             Some('/') => Token::Slash,
-            Some('=') => {
-                if self.peek() == Some('=') {
-                    self.advance();
-                    Token::DoubleEqual
-                } else {
-                    Token::Equal
-                }
-            }
-            Some('!') => {
-                if self.peek() == Some('=') {
-                    self.advance();
-                    Token::NotEqual
-                } else {
-                    Token::Illegal('!')
-                }
-            }
-            Some('"') => self.read_string(),
-            Some('\'') => self.read_char(),
+            Some('=') => Token::Equal,
+            Some(';') => Token::Semicolon,
             Some(c) if c.is_ascii_digit() => self.read_number(c),
-            Some(c) if Self::is_ident_start(c) => self.read_identifier(c),
             None => Token::EOF,
-            Some(c) => Token::Illegal(c),
+            Some(c) => {
+                if c.is_alphanumeric() {
+                    let identifier = self.read_identifier();
+                    match identifier {
+                        Token::Identifier { name, .. } if name == "var" => Token::Var,
+                        _ => identifier,
+                    }
+                } else {
+                    // If we reach here, it's an illegal character
+                    Token::Illegal(c)
+                }
+            },
         }
-    }
-
-    // we collect the chars until we find a closing quote.
-    fn read_string(&mut self) -> Token {
-        let mut result = String::new();
-        while let Some(c) = self.advance() {
-            if c == '"' {
-                break;
-            }
-            result.push(c);
-        }
-        Token::StringLiteral(result)
-    }
-
-    // we read a single character literal, expecting it to be surrounded by single quotes.
-    // If the closing quote is missing, we return an Illegal token.
-    fn read_char(&mut self) -> Token {
-        let c = self.advance();
-        if self.advance() != Some('\'') {
-            return Token::Illegal('\'');
-        }
-        Token::CharLiteral(c.unwrap_or('\0'))
     }
 
     // we read a number, which can be multiple digits.
-    // We continue reading digits until we hit a non-digit character.
+    // If it has a decimal point, we treat it as a float.
     fn read_number(&mut self, first: char) -> Token {
         let mut result = first.to_string();
+        let mut is_float = false;
         while let Some(c) = self.peek() {
             if c.is_ascii_digit() {
                 result.push(self.advance().unwrap());
             } else {
-                break;
+                if c == '.' {
+                    if is_float {
+                        // If we already saw a dot, this is an illegal number
+                        println!("Illegal number: multiple decimal points");
+                        return Token::Illegal(c);
+                    }
+                    is_float = true;
+                    result.push(self.advance().unwrap());
+                    while let Some(d) = self.peek() {
+                        if d.is_ascii_digit() {
+                            result.push(self.advance().unwrap());
+                        } else {
+                            if d.is_whitespace() || d == ';' {
+                                // If we hit whitespace, we stop reading the number
+                                // if we hit a semicolon, we also stop reading the number
+                                break;
+                            } else {
+                                // If we hit a non-digit, non-whitespace character, it's illegal
+                                return Token::Illegal(d);
+                            }
+                        }
+                    }
+                    return Token::Float(result.parse::<f64>().unwrap());
+                } else {
+                    break;
+                }
             }
         }
-        Token::Number(result.parse::<i64>().unwrap())
+        if is_float {
+            Token::Float(result.parse::<f64>().unwrap())
+        } else {
+            Token::Number(result.parse::<i64>().unwrap())
+        }
     }
 
-    // we read an identifier, which can start with a letter or underscore,
-    // and can contain letters, digits, and underscores.
-
-    fn read_identifier(&mut self, first: char) -> Token {
-        let mut ident = first.to_string();
+    fn read_identifier(&mut self) -> Token {
+        let mut identifier = String::new();
+        identifier.push(self.src[self.pos - 1]); // Start with the first character
+        // get the name of the var
         while let Some(c) = self.peek() {
-            if Self::is_ident_char(c) {
-                ident.push(self.advance().unwrap());
+            if c.is_alphanumeric() || c == '_' {
+                identifier.push(self.advance().unwrap());
             } else {
                 break;
             }
         }
-
-        match ident.as_str() {
-            "fn" => Token::Fn,
-            "var" => Token::Var,
-            "type" => Token::Type,
-            "if" => Token::If,
-            "else" => Token::Else,
-            "for" => Token::For,
-            "while" => Token::While,
-            "return" => Token::Return,
-            "null" => Token::Null,
-            "true" => Token::True,
-            "false" => Token::False,
-            "int" | "str" | "bool" | "float" => Token::TypeName(ident),
-            _ => Token::Identifier(ident),
-        }
+        return Token::Identifier {
+            name: identifier,
+        };
     }
 
-    // Check if a character can start an identifier (letter or underscore).
-    fn is_ident_start(c: char) -> bool {
-        c.is_ascii_alphabetic() || c == '_'
-    }
+    // fn read_identifier(&mut self) -> Token {
+    //     let mut identifier = String::new();
+    //     let value: Option<Value>;
+    //     // get the name of the var
+    //     while let Some(c) = self.peek() {
+    //         if c.is_alphanumeric() || c == '_' {
+    //             identifier.push(self.advance().unwrap());
+    //         } else {
+    //             break;
+    //         }
+    //     }
+    //     // get the value of the var
+    //     self.skip_whitespace();
+    //     if self.peek() == Some('=') {
+    //         self.advance(); // consume '='
+    //         self.skip_whitespace();
+    //         if let Some(c) = self.peek() {
+    //             // if the value is a digit it must be int, float, or illegal
+    //             if c.is_ascii_digit() {
+    //                 let first_digit = self.advance().unwrap();
+    //                 let num_token = self.read_number(first_digit);
+    //                 match num_token {
+    //                 Token::Number(n) => value = Some(Value::Int(n)),
+    //                 Token::Float(f) => value = Some(Value::Float(f)),
+    //                 _ => return Token::Illegal('='),
+    //                 }
+    //             // it it's a opening quote, it must be a string or illegal
+    //             } else if c == '"' {
+    //                 self.advance(); // consume opening quote
+    //                 let mut string_val = String::new();
+    //                 while let Some(ch) = self.peek() {
+    //                 if ch == '"' {
+    //                     self.advance(); // consume closing quote
+    //                     break;
+    //                 } else if ch == '\\' {
+    //                     self.advance(); // consume backslash
+    //                     if let Some(escaped_char) = self.advance() {
+    //                     string_val.push(escaped_char);
+    //                     }
+    //                 } else {
+    //                     string_val.push(self.advance().unwrap());
+    //                 }
+    //                 }
+    //                 value = Some(Value::Str(string_val));
+                
+    //             // if it's a t or f, it must be a bool or illegal
+    //             } else if c == 't' || c == 'f' {
+    //                 let mut bool_val = String::new();
+    //                 while let Some(ch) = self.peek() {
+    //                     if ch.is_alphanumeric() {
+    //                         bool_val.push(self.advance().unwrap());
+    //                     } else {
+    //                         break;
+    //                     }
+    //                 }
+    //                 match bool_val.as_str() {
+    //                     "true" => value = Some(Value::Bool(true)),
+    //                     "false" => value = Some(Value::Bool(false)),
+    //                     _ => return Token::Illegal('='),
+    //                 }
 
-    // Check if a character can be part of an identifier (letter, digit, or underscore).
-    fn is_ident_char(c: char) -> bool {
-        c.is_ascii_alphanumeric() || c == '_'
-    }
+    //             } else if c.is_alphabetic() || c == '_' {
+    //                 let _ = self.advance();
+    //                 let identifier_token = self.read_identifier();
+    //                 if let Token::Identifier { value: Some(val), .. } = identifier_token {
+    //                 value = Some(val);
+    //                 } else {
+    //                 return Token::Illegal('='); // Illegal identifier
+    //                 }
+    //             } else {
+    //                 return Token::Illegal(c); // Illegal character after '='
+    //             }
+    //         } else {
+    //         return Token::Illegal('='); // No value after '='
+    //         }
+    //     } else {
+    //         return Token::Identifier { name: identifier, value: Some(Value::Null) };
+    //     }
+    //     Token::Identifier { name: identifier, value }
+    // }
 }

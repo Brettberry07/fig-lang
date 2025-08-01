@@ -1,27 +1,23 @@
+use crate::helper::Value;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     // Single-character symbols
     LParen, RParen,
-    LBrace, RBrace,
-    Colon, Semicolon, Comma,
+    OQuote, CQuote,
     Plus, Minus, Star, Slash,
-    Equal, // =
-    
-    // Multi-char operators
-    DoubleEqual, NotEqual,
-    Greater, Less,
-    GreaterEqual, LessEqual,
-    Arrow, // ->
+    Equal,
+    Semicolon,
 
-    // Keywords
-    Fn, Var, Type, If, Else, For, While, Return, Null, True, False,
-
-    // Literals
-    Identifier(String),
-    TypeName(String),
     Number(i64),
-    StringLiteral(String),
-    CharLiteral(char),
+    Float(f64),
+    Var, // Variable declaration keyword
+
+    // Keywords and identifiers
+    Identifier {
+        name: String,
+    },
+
 
     // Special
     EOF,           // End of file
