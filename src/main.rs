@@ -13,6 +13,7 @@ fn main() {
     let input = "
     var x = 5;
     var y = 10;
+    var s = \"Hello, World!\";
     var z = x + y;
     var result = z * 2;
     result - 5;

@@ -84,6 +84,11 @@ impl Parser {
                 self.advance();
                 expr
             }
+            Token::String(s) => {
+                let expr = Expr::String(s.clone());
+                self.advance();
+                expr
+            }
             Token::LParen => {
                 self.advance();
                 let expr = self.parse_expression(Precedence::Lowest);

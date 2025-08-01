@@ -1,24 +1,22 @@
 use crate::token::Token;
-use crate::helper::{Expr, Stmt};
+use crate::helper::{Expr, Stmt, Type};
 use crate::enviorment::Environment;
 
 /// Evaluate an expression in the given environment.
-fn eval_expr(expr: &Expr, env: &Environment) -> f64 {
+fn eval_expr(expr: &Expr, env: &Environment) -> Type {
     match expr {
-        Expr::Number(n) => *n as f64,
-        Expr::Float(f)  => *f,
+        Expr::Number(n) => Type::Int(*n),
+        Expr::Float(f)  => Type::Float(*f),
+        Expr::String(s) => Type::Str(s.clone()),
         Expr::Var(name) => env.get(name),
         Expr::Binary { left, op, right } => {
             let l = eval_expr(left, env);
             let r = eval_expr(right, env);
             match op {
-                Token::Plus  => l + r,
-                Token::Minus => l - r,
-                Token::Star  => l * r,
-                Token::Slash => {
-                    if r == 0.0 { panic!("Division by zero"); }
-                    l / r
-                }
+                Token::Plus  => Type::add(l, r),
+                Token::Minus => Type::subtract(l, r),
+                Token::Star  => Type::multiply(l, r),
+                Token::Slash => Type::divide(l, r),
                 _ => panic!("Unknown operator {:?}", op),
             }
         }
@@ -27,7 +25,7 @@ fn eval_expr(expr: &Expr, env: &Environment) -> f64 {
 
 /// Execute a single statement, updating the environment.
 /// Returns Some(f64) if it is an expression statement, None for var declarations.
-fn eval_stmt(stmt: &Stmt, env: &mut Environment) -> Option<f64> {
+fn eval_stmt(stmt: &Stmt, env: &mut Environment) -> Option<Type> {
     match stmt {
         Stmt::VarDecl { name, value } => {
             let v = eval_expr(value, env);
@@ -39,15 +37,15 @@ fn eval_stmt(stmt: &Stmt, env: &mut Environment) -> Option<f64> {
 }
 
 /// Run all statements and return the last expression's value.
-pub fn eval_program(stmts: &[Stmt]) -> f64 {
+pub fn eval_program(stmts: &[Stmt]) -> Type {
     let mut env      = Environment::new();
-    let mut last_val = 0.0;
+    let mut last_val: Option<Type> = None;
 
     for stmt in stmts {
         if let Some(v) = eval_stmt(stmt, &mut env) {
-            last_val = v;
+            last_val = Some(v);
         }
     }
 
-    last_val
+    last_val.unwrap_or(Type::Null)
 }

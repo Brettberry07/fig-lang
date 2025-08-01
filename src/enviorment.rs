@@ -1,8 +1,8 @@
 use std::collections::HashMap;
-
+use crate::helper::{Type};
 /// A simple runtime environment mapping variable names to f64 values.
 pub struct Environment {
-    values: HashMap<String, f64>,
+    values: HashMap<String, Type>,
 }
 
 impl Environment {
@@ -11,13 +11,14 @@ impl Environment {
     }
 
     /// Define or reassign a variable
-    pub fn define(&mut self, name: String, value: f64) {
+    pub fn define(&mut self, name: String, value: Type) {
         self.values.insert(name, value);
     }
 
     /// Look up a variable; panic if undefined
-    pub fn get(&self, name: &str) -> f64 {
-        *self.values.get(name)
-            .unwrap_or_else(|| panic!("Undefined variable '{}'", name))
+    pub fn get(&self, name: &str) -> Type {
+        self.values.get(name).cloned().unwrap_or_else(|| {
+            panic!("Undefined variable: {}", name)
+        })
     }
 }

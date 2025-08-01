@@ -1,4 +1,4 @@
-use crate::helper::Value;
+use crate::helper::Type;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
@@ -11,6 +11,7 @@ pub enum Token {
 
     Number(i64),
     Float(f64),
+    String(String),
     Var, // Variable declaration keyword
 
     // Keywords and identifiers

@@ -1,5 +1,5 @@
 use crate::token::Token;
-use crate::helper::Value;
+use crate::helper::Type;
 
 pub struct Lexer {
     src: Vec<char>, // Source code as a vector of characters
@@ -75,6 +75,7 @@ impl Lexer {
             Some('*') => Token::Star,
             Some('/') => Token::Slash,
             Some('=') => Token::Equal,
+            Some('"') => self.read_string(),
             Some(';') => Token::Semicolon,
             Some(c) if c.is_ascii_digit() => self.read_number(c),
             None => Token::EOF,
@@ -135,6 +136,25 @@ impl Lexer {
         } else {
             Token::Number(result.parse::<i64>().unwrap())
         }
+    }
+
+    fn read_string(&mut self) -> Token {
+        let mut string_val = String::new();
+        while let Some(c) = self.peek() {
+            if c == '"' {
+                self.advance(); // consume closing quote
+                return Token::String(string_val);
+            } else if c == '\\' {
+                self.advance(); // consume backslash
+                if let Some(escaped_char) = self.advance() {
+                    string_val.push(escaped_char);
+                }
+            } else {
+                string_val.push(self.advance().unwrap());
+            }
+        }
+        // If we reach here, it means the string was not properly closed
+        Token::Illegal('"')
     }
 
     fn read_identifier(&mut self) -> Token {
