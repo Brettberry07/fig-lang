@@ -9,6 +9,16 @@ pub enum Expr {
         op: Token,
         right: Box<Expr>,
     },
+    Var(String), // Variable reference
+}
+
+#[derive(Debug)]
+pub enum Stmt {
+    VarDecl {
+        name: String,
+        value: Expr,
+    },
+    ExprStmt(Expr),
 }
 
 #[derive(PartialEq, PartialOrd)]
