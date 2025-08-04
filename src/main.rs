@@ -5,25 +5,25 @@ mod lexer;
 mod parser;
 mod token;
 
+use std::{fs};
+use helper::{Type};
 use lexer::Lexer;
 use parser::Parser;
 use evalulator::eval_program;
 
 fn main() {
-    let input = "
-    var x = 5.12;
-    var y = 10;
-    var s = \"Hello, World!\";
-    var b = true;
-    var n = false;
-    var z = x + y;
-    z + x;
-    var result = z * 2;
-    ";
-    let lexer = Lexer::new(input);
+    let filename = "main.fg";
+
+    let source = fs::read_to_string(filename)
+        .expect("Failed to read file");
+
+    let lexer = Lexer::new(&source);
     let mut parser = Parser::new(lexer);
 
     let stmts = parser.parse();
     let result = eval_program(&stmts);
-    println!("{:#?}", result);
+    match result {
+        Type::Null => {},
+        _ => println!("Final result: {:?}", result),
+    }
 }

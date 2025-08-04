@@ -1,4 +1,5 @@
 use crate::token::Token;
+use std::fmt;
 
 #[derive(Debug)]
 pub enum Expr {
@@ -21,6 +22,7 @@ pub enum Stmt {
         value: Expr,
     },
     ExprStmt(Expr),
+    PrntStmt(Expr), // Print statement
 }
 
 #[derive(PartialEq, PartialOrd)]
@@ -109,6 +111,18 @@ impl Type {
             (Type::Int(a), Type::Float(b)) => Type::Float(a as f64 / b),
             (Type::Float(a), Type::Int(b)) => Type::Float(a / b as f64),
             _ => panic!("Invalid types for addition"),  // Handle other cases as needed
+        }
+    }
+}
+
+impl fmt::Display for Type {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Type::Str(s) => write!(f, "{}", s),
+            Type::Int(i) => write!(f, "{}", i),
+            Type::Bool(b) => write!(f, "{}", b),
+            Type::Float(n) => write!(f, "{}", n),
+            Type::Null => write!(f, "null"),
         }
     }
 }

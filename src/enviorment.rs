@@ -21,4 +21,12 @@ impl Environment {
             panic!("Undefined variable: {}", name)
         })
     }
+
+    pub fn is_defined(&self, name: &str) -> bool {
+        self.values.contains_key(name)
+    }
+
+    pub fn update(&mut self, name: String, value: Type) {
+        self.values.insert(name, value);
+    }
 }

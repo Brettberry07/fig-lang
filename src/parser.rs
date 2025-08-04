@@ -21,8 +21,8 @@ impl Parser {
 
     /// Parses a single statement (either `var x = …;` or an expression-stmt like `x + 2;`)
     pub fn parse_stmt(&mut self) -> Stmt {
-        println!("Parsing token: {:?}", self.current);
-        match &self.current {
+        // println!("Parsing token: {:?}", self.current);
+        match self.current.clone() {
             Token::Var => {
                 // var-declaration
                 self.advance(); // consume 'var'
@@ -55,6 +55,46 @@ impl Parser {
                 self.advance(); // consume ';'
 
                 Stmt::VarDecl { name, value }
+            }
+
+            Token::Print => {
+                // print statement
+                self.advance(); // consume 'print'
+
+                // parse the expression to print
+                let expr = self.parse_expression(Precedence::Lowest);
+
+                // expect semicolon
+                if self.current != Token::Semicolon {
+                    panic!("Expected ';' after print expression, got {:?}", self.current);
+                }
+                self.advance(); // consume ';'
+
+                Stmt::PrntStmt(expr)
+            }
+
+            Token::Identifier { name } => {
+                self.advance(); // consume identifier
+                println!("Should be = now: {:?}", self.current);
+
+                // expect '='
+                if self.current != Token::Equal {
+                    panic!("Expected '=' after variable name, got {:?}", self.current);
+                }
+                self.advance(); // consume '='
+
+                // parse the initializer expression
+                let value = self.parse_expression(Precedence::Lowest);
+                println!("The value {:?}", value);
+
+                // expect semicolon
+                if self.current != Token::Semicolon {
+                    panic!("Expected ';' after var declaration, got {:?}", self.current);
+                }
+                self.advance(); // consume ';'
+                
+                println!("Parsed variable declaration: {} = {:?}", name, value);
+                Stmt::VarDecl { name: name.to_string(), value }
             }
 
             _ => {

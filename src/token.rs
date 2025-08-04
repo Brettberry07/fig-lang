@@ -15,6 +15,9 @@ pub enum Token {
     Bool(bool),
     Var, // Variable declaration keyword
 
+    // built-in functions
+    Print,
+
     // Keywords and identifiers
     Identifier {
         name: String,

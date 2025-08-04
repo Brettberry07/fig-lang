@@ -30,10 +30,19 @@ fn eval_stmt(stmt: &Stmt, env: &mut Environment) -> Option<Type> {
     match stmt {
         Stmt::VarDecl { name, value } => {
             let v = eval_expr(value, env);
-            env.define(name.clone(), v);
+            if env.is_defined(name) {
+                env.update(name.clone(), v.clone());
+            } else {
+                env.define(name.clone(), v);
+            }
             None
         }
         Stmt::ExprStmt(expr) => Some(eval_expr(expr, env)),
+        Stmt::PrntStmt(expr) => {
+            let value = eval_expr(expr, env);
+            println!("{}", value); // Print the value
+            None
+        }
     }
 }
 
