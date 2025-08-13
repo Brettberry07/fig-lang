@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::helper::{Type};
+use crate::types::Type;
 /// A simple runtime environment mapping variable names to f64 values.
 pub struct Environment {
     values: HashMap<String, Type>,

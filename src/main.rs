@@ -4,9 +4,10 @@ mod helper;
 mod lexer;
 mod parser;
 mod token;
+mod types;
 
 use std::{fs};
-use helper::{Type};
+use types::Type;
 use lexer::Lexer;
 use parser::Parser;
 use evalulator::eval_program;

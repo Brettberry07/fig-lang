@@ -1,5 +1,6 @@
 use crate::token::Token;
-use crate::helper::{Expr, Stmt, Type};
+use crate::helper::{Expr, Stmt};
+use crate::types::Type;
 use crate::enviorment::Environment;
 
 /// Evaluate an expression in the given environment.
