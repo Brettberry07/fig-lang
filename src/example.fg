@@ -12,18 +12,20 @@ fn greet(name: str) -> str {
 }
 
 // conditionals
-if x > 10 {
+if (x > 10) {
     print("x is bigger than 10");
+} elif (x == 10) {
+    print("x is 10");
 } else {
     print("x is smaller than 10");
 }
 
 // loops
-for i: int in range(5) {
+for i in range(5) {
     print(i);
 }
 
-while condition {
+while (condition) {
     do something
 }
 

@@ -1,9 +1,5 @@
-var s = "Hello from S!";
-print(s);
-s = 3;
-print(s);
-print(5);
-var is_cool = true;
-result = 5 * 2 + (3 - s) / 6;
-print(result);
-print(is_cool);
+print(true == false);
+print(5 <= 3);
+print (5 != 2);
+print ("Hello" < "World!");
+print(true);

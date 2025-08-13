@@ -1,5 +1,5 @@
 use crate::token::Token;
-use crate::helper::Type;
+// use crate::helper::Type;
 
 pub struct Lexer {
     src: Vec<char>, // Source code as a vector of characters
@@ -20,10 +20,10 @@ impl Lexer {
         self.src.get(self.pos).copied()
     }
 
-    // Like peek, but looks at the next next character instead
-    fn peek_next(&self) -> Option<char> {
-        self.src.get(self.pos + 1).copied()
-    }
+    // // Like peek, but looks at the next next character instead
+    // fn peek_next(&self) -> Option<char> {
+    //     self.src.get(self.pos + 1).copied()
+    // }
 
     // Advance to the next character and return it.
     // Returns None if at the end of input.
@@ -52,7 +52,7 @@ impl Lexer {
     pub fn next_token(&mut self) -> Token {
         self.skip_whitespace();
         let ch = self.advance();
-        println!("Lexer: Read character: {:?}", ch);
+        // println!("Lexer: Read character: {:?}", ch);
 
         match ch {
             Some('(') => Token::LParen,
@@ -75,7 +75,38 @@ impl Lexer {
             }
             Some('*') => Token::Star,
             Some('/') => Token::Slash,
-            Some('=') => Token::Equal,
+            Some('=') => {
+                if self.peek() == Some('=') {
+                    self.advance(); // consume the second '='
+                    Token::DblEqual
+                } else {
+                    Token::Equal
+                }
+            },
+            Some('!') => {
+                if self.peek() == Some('=') {
+                    self.advance(); // consume the '='
+                    Token::NotEqual
+                } else {
+                    Token::Illegal('!')
+                }
+            },
+            Some('<') => {
+                if self.peek() == Some('=') {
+                    self.advance(); // consume the '='
+                    Token::LessThanEqual
+                } else {
+                    Token::LessThan
+                }
+            },
+            Some('>') => {
+                if self.peek() == Some('=') {
+                    self.advance(); // consume the '='
+                    Token::GreaterThanEqual
+                } else {
+                    Token::GreaterThan
+                }
+            },
             Some('"') => self.read_string(),
             Some(';') => Token::Semicolon,
             Some(c) if c.is_ascii_digit() => self.read_number(c),
@@ -102,7 +133,7 @@ impl Lexer {
     // If it has a decimal point, we treat it as a float.
     fn read_number(&mut self, first: char) -> Token {
         let mut result = first.to_string();
-        let mut is_float = false;
+        let is_float = false;
         while let Some(c) = self.peek() {
             if c.is_ascii_digit() {
                 result.push(self.advance().unwrap());
@@ -113,7 +144,6 @@ impl Lexer {
                         println!("Illegal number: multiple decimal points");
                         return Token::Illegal(c);
                     }
-                    is_float = true;
                     result.push(self.advance().unwrap());
                     while let Some(d) = self.peek() {
                         if d.is_ascii_digit() {
@@ -159,23 +189,6 @@ impl Lexer {
         }
         // If we reach here, it means the string was not properly closed
         Token::Illegal('"')
-    }
-
-    fn read_bool(&mut self) -> Token {
-        let mut bool_val = String::new();
-        let current = self.src[self.pos - 1]; // Start with the first character
-        while let Some(c) = self.peek() {
-            if c.is_alphabetic() {
-                bool_val.push(self.advance().unwrap());
-            } else {
-                break;
-            }
-        }
-        match bool_val.as_str() {
-            "true" => Token::Bool(true),
-            "false" => Token::Bool(false),
-            _ => Token::Illegal(current), // Illegal boolean value
-        }
     }
 
     fn read_identifier(&mut self) -> Token {

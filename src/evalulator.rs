@@ -4,6 +4,7 @@ use crate::enviorment::Environment;
 
 /// Evaluate an expression in the given environment.
 fn eval_expr(expr: &Expr, env: &Environment) -> Type {
+    // println!("Evaluating expression: {:?}", expr);
     match expr {
         Expr::Number(n) => Type::Int(*n),
         Expr::Float(f)  => Type::Float(*f),
@@ -18,14 +19,20 @@ fn eval_expr(expr: &Expr, env: &Environment) -> Type {
                 Token::Minus => Type::subtract(l, r),
                 Token::Star  => Type::multiply(l, r),
                 Token::Slash => Type::divide(l, r),
+                Token::DblEqual => Type::equal(l, r),
+                Token::NotEqual => Type::not_equal(l, r),
+                Token::LessThan => Type::less_than(l, r),
+                Token::GreaterThan => Type::greater_than(l, r),
+                Token::LessThanEqual => Type::less_than_equal(l, r),
+                Token::GreaterThanEqual => Type::greater_than_equal(l, r),
                 _ => panic!("Unknown operator {:?}", op),
             }
         }
     }
 }
 
-/// Execute a single statement, updating the environment.
-/// Returns Some(f64) if it is an expression statement, None for var declarations.
+// Execute a single statement, updating the environment.
+// Returns Some(f64) if it is an expression statement, None for var declarations.
 fn eval_stmt(stmt: &Stmt, env: &mut Environment) -> Option<Type> {
     match stmt {
         Stmt::VarDecl { name, value } => {
