@@ -4,6 +4,7 @@
 pub enum Token {
     // Single-character symbols
     LParen, RParen,
+    LBrace, RBrace,
     Plus, Minus, Star, Slash,
     Equal,
     Semicolon,
@@ -20,9 +21,9 @@ pub enum Token {
     Bool(bool),
 
     // Keywords
-    // If,
-    // Else,
-    // ElIf,
+    If,
+    Else,
+    Elif,
     // While,
     // For,
     // Function, // Function definition

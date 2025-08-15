@@ -51,6 +51,26 @@ fn eval_stmt(stmt: &Stmt, env: &mut Environment) -> Option<Type> {
             println!("{}", value); // Print the value
             None
         }
+        Stmt::IfStmt { condition, then_branch, else_branch } => {
+            let cond_value = eval_expr(condition, env);
+            match cond_value {
+                Type::Bool(true) => {
+                    eval_stmt(then_branch, env);
+                }
+                Type::Bool(false) => {
+                    if let Some(else_stmt) = else_branch {
+                        eval_stmt(else_stmt, env);
+                    }
+                }
+                _ => panic!("Condition must be a boolean, got {:?}", cond_value),
+            }
+            // if cond_value.is_truthy() {
+            //     eval_stmt(then_branch, env);
+            // } else if let Some(else_stmt) = else_branch {
+            //     eval_stmt(else_stmt, env);
+            // }
+            None
+        }
     }
 }
 

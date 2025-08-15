@@ -57,6 +57,8 @@ impl Lexer {
         match ch {
             Some('(') => Token::LParen,
             Some(')') => Token::RParen,
+            Some('{') => Token::LBrace,
+            Some('}') => Token::RBrace,
             Some('+') => Token::Plus,
             Some('-') => {
                 match self.peek() {
@@ -119,6 +121,10 @@ impl Lexer {
                         Token::Identifier { name, .. } if name == "true" => Token::Bool(true),
                         Token::Identifier { name, .. } if name == "false" => Token::Bool(false),
                         Token::Identifier { name, .. } if name == "print" => Token::Print,
+                        Token::Identifier { name, .. } if name == "if" => Token::If,
+                        Token::Identifier { name, .. } if name == "else" => Token::Else,
+                        Token::Identifier { name, .. } if name == "elif" => Token::Elif,
+
                         _ => identifier,
                     }
                 } else {

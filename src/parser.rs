@@ -22,7 +22,7 @@ impl Parser {
 
     /// Parses a single statement (either `var x = …;` or an expression-stmt like `x + 2;`)
     pub fn parse_stmt(&mut self) -> Stmt {
-        // println!("Parsing token: {:?}", self.current);
+        println!("Parsing token: {:?}", self.current);
         match self.current.clone() {
             Token::Var => {
                 // var-declaration
@@ -59,13 +59,17 @@ impl Parser {
             }
 
             Token::Print => {
+                println!("Parsing print statement: {:?}", self.current);
                 // print statement
                 self.advance(); // consume 'print'
+                println!("Should be expression now: {:?}", self.current);
 
                 // parse the expression to print
                 let expr = self.parse_expression(Precedence::Lowest);
+                println!("The expression to print: {:?}", expr);
 
                 // expect semicolon
+
                 if self.current != Token::Semicolon {
                     panic!("Expected ';' after print expression, got {:?}", self.current);
                 }
@@ -98,6 +102,46 @@ impl Parser {
                 Stmt::VarDecl { name: name.to_string(), value }
             }
 
+            Token::If | Token::Elif => {
+                // if statement
+                self.advance(); // consume 'if'
+
+                // parse the condition expression
+                let condition = self.parse_expression(Precedence::Lowest);
+
+                // expect '{' for then branch
+                if self.current != Token::LBrace {
+                    panic!("Expected 'LBrace' after 'if' condition, got {:?}", self.current);
+                }
+                self.advance(); // consume '{'
+
+                // parse the then branch
+                let then_branch = Box::new(self.parse_stmt());
+
+                // expect '}' to close the condition
+                if self.current != Token::RBrace {
+                    panic!("Expected 'Rbrace' after 'if' condition, got {:?}", self.current);
+                }
+                self.advance(); // consume '}'
+
+                // check for else branch
+                let else_branch = if self.current == Token::Else {
+                    self.advance(); // consume 'else'
+                    println!("Should be LBrace now: {:?}", self.current);
+                    self.advance(); // consume '{'
+                    Some(Box::new(self.parse_stmt()))
+                } else if self.current == Token::Elif {
+                    Some(Box::new(self.parse_stmt()))
+                } else {
+                    None
+                };
+
+                // expect '}' to close the else branch if it exists
+                self.advance(); // consume '}'
+
+                Stmt::IfStmt { condition, then_branch, else_branch }
+            }
+
             _ => {
                 // expression statement
                 let expr = self.parse_expression(Precedence::Lowest);
@@ -114,7 +158,9 @@ impl Parser {
 
     /// Parses an expression with precedence climbing
     pub fn parse_expression(&mut self, prec: Precedence) -> Expr {
+        println!("Current: {:?}", self.current);
         let mut left = match &self.current {
+            
             Token::Number(n) => {
                 let expr = Expr::Number(*n);
                 self.advance();
@@ -141,6 +187,15 @@ impl Parser {
                 // println!("expr: {:?}", expr);
                 if self.current != Token::RParen {
                     panic!("Expected closing parenthesis, got {:?}", self.current);
+                }
+                self.advance();
+                expr
+            }
+            Token::LBrace => {
+                self.advance();
+                let expr = self.parse_expression(Precedence::Lowest);
+                if self.current != Token::RBrace {
+                    panic!("Expected closing brace, got {:?}", self.current);
                 }
                 self.advance();
                 expr

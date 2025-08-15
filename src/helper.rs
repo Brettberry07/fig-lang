@@ -22,6 +22,11 @@ pub enum Stmt {
     },
     ExprStmt(Expr),
     PrntStmt(Expr), // Print statement
+    IfStmt {
+        condition: Expr,
+        then_branch: Box<Stmt>,
+        else_branch: Option<Box<Stmt>>,
+    },
 }
 
 #[derive(PartialEq, PartialOrd)]

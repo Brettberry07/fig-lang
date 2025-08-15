@@ -1,8 +1,10 @@
 var x = 5;
+x = 2;
 
-print(true == false);
-print(5 <= 3);
-print (x != 2);
-print ("Hello" < "World!");
-print(true);
-print(x*2/(3+2));
+if (x > 3) {
+    print("x is greater than 3");
+} elif (x == 2) {
+    print("x is equal to 2");
+} else {
+    print("x is not greater than 3");
+}
