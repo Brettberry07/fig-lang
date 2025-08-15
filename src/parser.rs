@@ -76,7 +76,7 @@ impl Parser {
 
             Token::Identifier { name } => {
                 self.advance(); // consume identifier
-                // println!("Should be = now: {:?}", self.current);
+                println!("Should be = now: {:?}", self.current);
 
                 // expect '='
                 if self.current != Token::Equal {

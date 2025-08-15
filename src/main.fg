@@ -1,5 +1,8 @@
+var x = 5;
+
 print(true == false);
 print(5 <= 3);
-print (5 != 2);
+print (x != 2);
 print ("Hello" < "World!");
 print(true);
+print(x*2/(3+2));

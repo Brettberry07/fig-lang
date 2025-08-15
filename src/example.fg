@@ -1,17 +1,21 @@
-// example.fg
+# example.fg
 
-// defining variables
-var x: int = 5;
-var name: str = "my-name"; // "" for strings
-var grade: char = 'a';     // '' for chars
-var isAge: bool? = null;   // we'll see abt optionals, maybe a later thing
+# defining variables
+# all interpreted for typing
+var x = 5;
+var name = "my-name"; # "" for strings
+var grade = 'a';     # '' for chars
+var isAge = null;    # allowing for null types
 
-// functions
-fn greet(name: str) -> str {
+var list = [1, 2, 3, 4]; # list of integers
+var mixedList = [1, "two", 3.0, true]; # mixed list
+var test = [2, 5.6];
+
+# functions
+fn greet(name: str) {
     return "hello ${name}";
 }
-
-// conditionals
+# conditionals
 if (x > 10) {
     print("x is bigger than 10");
 } elif (x == 10) {
@@ -19,32 +23,32 @@ if (x > 10) {
 } else {
     print("x is smaller than 10");
 }
-
-// loops
+# loops
 for i in range(5) {
     print(i);
 }
 
 while (condition) {
-    do something
+    doSomething();
 }
 
-// types and using them
-type Person {
-    name: string;
-    age: int;
+class Person() {
+    name;
+    age;
+
+    fn intro(self) {
+        print("my name is ${name}, and I am ${age} years old!");
+    }
 }
 
 fn birthday(p: Person) -> Person {
     p.age = p.age + 1;
     return p;
 }
-
-// main function
-fn main() -> int {
+# main function
+fn main() {
     print("Hello, World!");
-    return 0;
 }
 
-// file extension: .fg
-// to run: fig run example.fg
+# file extension: .fg 
+# to run: fig run example.fg
