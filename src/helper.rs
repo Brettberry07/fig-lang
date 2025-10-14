@@ -16,20 +16,12 @@ pub enum Expr {
 
 #[derive(Debug)]
 pub enum Stmt {
-    VarDecl {
-        name: String,
-        value: Expr,
-    },
+    VarDecl { name: String, value: Expr },
     ExprStmt(Expr),
-    PrntStmt(Expr), // Print statement
-    IfStmt {
-        condition: Expr,
-        then_branch: Box<Stmt>,
-        else_branch: Option<Box<Stmt>>,
-    },
-}
-
-#[derive(PartialEq, PartialOrd)]
+    PrntStmt(Expr),
+    Block(Vec<Stmt>),
+    IfStmt { condition: Expr, then_branch: Box<Stmt>, else_branch: Option<Box<Stmt>> },
+}#[derive(PartialEq, PartialOrd)]
 pub enum Precedence {
     Lowest,
     Sum,     // + -

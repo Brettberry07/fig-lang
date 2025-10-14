@@ -103,43 +103,40 @@ impl Parser {
             }
 
             Token::If | Token::Elif => {
-                // if statement
-                self.advance(); // consume 'if'
+                self.advance(); // consume 'if' or 'elif'
 
                 // parse the condition expression
                 let condition = self.parse_expression(Precedence::Lowest);
 
                 // expect '{' for then branch
                 if self.current != Token::LBrace {
-                    panic!("Expected 'LBrace' after 'if' condition, got {:?}", self.current);
+                    panic!("Expected '{{' after condition, got {:?}", self.current);
                 }
                 self.advance(); // consume '{'
 
-                // parse the then branch
-                let then_branch = Box::new(self.parse_stmt());
-
-                // expect '}' to close the condition
-                if self.current != Token::RBrace {
-                    panic!("Expected 'Rbrace' after 'if' condition, got {:?}", self.current);
-                }
-                self.advance(); // consume '}'
-
-                // check for else branch
+                // parse the then branch (multiple statements)
+                let then_block = self.parse_block();
+                
+                // check for else or elif branch
                 let else_branch = if self.current == Token::Else {
                     self.advance(); // consume 'else'
-                    println!("Should be LBrace now: {:?}", self.current);
+                    if self.current != Token::LBrace {
+                        panic!("Expected '{{' after 'else', got {:?}", self.current);
+                    }
                     self.advance(); // consume '{'
-                    Some(Box::new(self.parse_stmt()))
+                    let block = self.parse_block();
+                    Some(Box::new(block))
                 } else if self.current == Token::Elif {
                     Some(Box::new(self.parse_stmt()))
                 } else {
                     None
                 };
 
-                // expect '}' to close the else branch if it exists
-                self.advance(); // consume '}'
-
-                Stmt::IfStmt { condition, then_branch, else_branch }
+                Stmt::IfStmt {
+                    condition,
+                    then_branch: Box::new(then_block),
+                    else_branch,
+                }
             }
 
             _ => {
@@ -222,6 +219,22 @@ impl Parser {
         }
 
         left
+    }
+
+    /// Parse a block of statements until closing brace
+    fn parse_block(&mut self) -> Stmt {
+        let mut stmts = Vec::new();
+        
+        while self.current != Token::RBrace && self.current != Token::EOF {
+            stmts.push(self.parse_stmt());
+        }
+        
+        if self.current != Token::RBrace {
+            panic!("Expected '}}' at end of block, got {:?}", self.current);
+        }
+        self.advance(); // consume '}'
+        
+        Stmt::Block(stmts)
     }
 
     /// Parse a *program* (zero or more statements) until EOF

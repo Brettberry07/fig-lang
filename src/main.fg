@@ -1,7 +1,12 @@
 var x = 5;
-x = 1;
+x = 2 + x * (6/2);
+print("x" + "y");
+
 
 if (x > 3) {
+    if (x > 4) {
+        print("x is greater than 4");
+    }
     print("x is greater than 3");
 } elif (x == 2) {
     print("x is equal to 2");
@@ -11,3 +16,5 @@ if (x > 3) {
 else {
     print("x is not greater than 3");
 }
+
+print("Done");

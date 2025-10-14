@@ -34,6 +34,8 @@ impl Type {
             (Type::Float(a), Type::Float(b)) => Type::Float(a + b),
             (Type::Int(a), Type::Float(b)) => Type::Float(a as f64 + b),
             (Type::Float(a), Type::Int(b)) => Type::Float(a + b as f64),
+
+            (Type::Str(a), Type::Str(b)) => Type::Str(a + &b),
             _ => panic!("Invalid types for addition"),  // Handle other cases as needed
         }
     }

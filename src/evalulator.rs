@@ -45,6 +45,15 @@ fn eval_stmt(stmt: &Stmt, env: &mut Environment) -> Option<Type> {
             }
             None
         }
+        Stmt::Block(stmts) => {
+            let mut last_val = None;
+            for stmt in stmts {
+                if let Some(val) = eval_stmt(stmt, env) {
+                    last_val = Some(val);
+                }
+            }
+            last_val
+        }
         Stmt::ExprStmt(expr) => Some(eval_expr(expr, env)),
         Stmt::PrntStmt(expr) => {
             let value = eval_expr(expr, env);
