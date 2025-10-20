@@ -8,6 +8,7 @@ pub enum Token {
     Plus, Minus, Star, Slash,
     Equal,
     Semicolon,
+    Comma,
 
     // Multi-character symbols
     DblEqual, // Double equal for equality check
@@ -24,8 +25,12 @@ pub enum Token {
     If,
     Else,
     Elif,
+    Fn,
+    Return,
     // While,
-    // For,
+    For,
+    In,
+    Range,
     // Function, // Function definition
     // Return,
 

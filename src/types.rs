@@ -5,8 +5,9 @@ use std::fmt;
 pub enum Type {
     Int(i64),
     Float(f64),
-    Str(String),
     Bool(bool),
+    Str(String),
+    Range(i64),
     Null,
 }
 
@@ -155,6 +156,7 @@ impl fmt::Display for Type {
             Type::Int(i) => write!(f, "{}", i),
             Type::Bool(b) => write!(f, "{}", b),
             Type::Float(n) => write!(f, "{}", n),
+            Type::Range(r) => write!(f, "{}", r),
             Type::Null => write!(f, "null"),
         }
     }

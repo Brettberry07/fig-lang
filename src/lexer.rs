@@ -38,12 +38,25 @@ impl Lexer {
     // Skip whitespace characters.
     // Advances the position until a non-whitespace character is found.
     fn skip_whitespace(&mut self) {
-        while let Some(c) = self.peek() {
-            if c.is_whitespace() {
-                self.advance();
-            } else {
-                break;
+        loop {
+            while let Some(c) = self.peek() {
+                if c.is_whitespace() {
+                    self.advance();
+                } else {
+                    break;
+                }
             }
+
+            if self.peek() == Some('#') {
+                while let Some(ch) = self.advance() {
+                    if ch == '\n' {
+                        break;
+                    }
+                }
+                continue;
+            }
+
+            break;
         }
     }
 
@@ -93,6 +106,7 @@ impl Lexer {
                     Token::Illegal('!')
                 }
             },
+            Some(',') => Token::Comma,
             Some('<') => {
                 if self.peek() == Some('=') {
                     self.advance(); // consume the '='
@@ -124,6 +138,9 @@ impl Lexer {
                         Token::Identifier { name, .. } if name == "if" => Token::If,
                         Token::Identifier { name, .. } if name == "else" => Token::Else,
                         Token::Identifier { name, .. } if name == "elif" => Token::Elif,
+                        Token::Identifier { name, .. } if name == "for" => Token::For,
+                        Token::Identifier { name, .. } if name == "in" => Token::In,
+                        Token::Identifier { name, .. } if name == "range" => Token::Range,
 
                         _ => identifier,
                     }
@@ -208,8 +225,22 @@ impl Lexer {
                 break;
             }
         }
-        return Token::Identifier {
-            name: identifier,
-        };
+        match identifier.as_str() {
+            "var" => Token::Var,
+            "true" => Token::Bool(true),
+            "false" => Token::Bool(false),
+            "print" => Token::Print,
+            "if" => Token::If,
+            "else" => Token::Else,
+            "elif" => Token::Elif,
+            "for" => Token::For,
+            "in" => Token::In,
+            "range" => Token::Range,
+            "fn" => Token::Fn,
+            "return" => Token::Return,
+            _ => Token::Identifier {
+                name: identifier,
+            }
+        }
     }
 }

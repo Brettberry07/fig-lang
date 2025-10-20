@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 use crate::types::Type;
+use crate::helper::Stmt;
 use std::rc::Rc;
 use std::cell::RefCell;
 /// A simple runtime environment mapping variable names to Types.
 pub struct Environment {
     values: HashMap<String, Type>,
     parent: Option<Rc<RefCell<Environment>>>,
+    functions: HashMap<String, Function>,
 }
 
 impl Environment {
@@ -13,6 +15,7 @@ impl Environment {
         Environment { 
             values: HashMap::new(),
             parent: None,
+            functions: HashMap::new(),
          }
     }
 
@@ -21,6 +24,7 @@ impl Environment {
         Environment {
             values: HashMap::new(),
             parent: Some(parent),
+            functions: HashMap::new(),
         }
     }
 
@@ -63,4 +67,25 @@ impl Environment {
         }
         panic!("Undefined variable: {}", name);
     }
+
+    pub fn define_function(&mut self, name: String, function: Function) {
+        self.functions.insert(name, function);
+    }
+
+    pub fn get_function(&self, name: &str) -> Option<Function> {
+        if let Some(func) = self.functions.get(name) {
+            return Some(func.clone());
+        }
+        if let Some(ref parent) = self.parent {
+            return parent.borrow().get_function(name);
+        }
+        None
+    }
+}
+
+#[derive(Clone)]
+pub struct Function {
+    pub params: Vec<String>,
+    pub body: Stmt,
+    pub closure: Rc<RefCell<Environment>>,
 }

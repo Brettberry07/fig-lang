@@ -22,7 +22,6 @@ impl Parser {
 
     /// Parses a single statement (either `var x = …;` or an expression-stmt like `x + 2;`)
     pub fn parse_stmt(&mut self) -> Stmt {
-        println!("Parsing token: {:?}", self.current);
         match self.current.clone() {
             Token::Var => {
                 // var-declaration
@@ -59,14 +58,11 @@ impl Parser {
             }
 
             Token::Print => {
-                println!("Parsing print statement: {:?}", self.current);
                 // print statement
                 self.advance(); // consume 'print'
-                println!("Should be expression now: {:?}", self.current);
 
                 // parse the expression to print
                 let expr = self.parse_expression(Precedence::Lowest);
-                println!("The expression to print: {:?}", expr);
 
                 // expect semicolon
 
@@ -78,28 +74,131 @@ impl Parser {
                 Stmt::PrntStmt(expr)
             }
 
-            Token::Identifier { name } => {
+            Token::Fn => {
+                self.advance(); // consume 'fn'
+
+                let name = if let Token::Identifier { name } = self.current.clone() {
+                    name
+                } else {
+                    panic!("Expected function name after 'fn', got {:?}", self.current);
+                };
                 self.advance(); // consume identifier
-                println!("Should be = now: {:?}", self.current);
 
-                // expect '='
-                if self.current != Token::Equal {
-                    panic!("Expected '=' after variable name, got {:?}", self.current);
+                if self.current != Token::LParen {
+                    panic!("Expected '(' after function name, got {:?}", self.current);
                 }
-                self.advance(); // consume '='
+                self.advance(); // consume '('
 
-                // parse the initializer expression
-                let value = self.parse_expression(Precedence::Lowest);
-                // println!("The value {:?}", value);
+                let mut params = Vec::new();
+                if self.current != Token::RParen {
+                    loop {
+                        if let Token::Identifier { name } = self.current.clone() {
+                            params.push(name);
+                        } else {
+                            panic!("Expected parameter name, got {:?}", self.current);
+                        }
+                        self.advance(); // consume parameter
 
-                // expect semicolon
-                if self.current != Token::Semicolon {
-                    panic!("Expected ';' after var declaration, got {:?}", self.current);
+                        if self.current == Token::Comma {
+                            self.advance(); // consume ','
+                            continue;
+                        }
+                        break;
+                    }
                 }
-                self.advance(); // consume ';'
-                
-                // println!("Parsed variable declaration: {} = {:?}", name, value);
-                Stmt::VarDecl { name: name.to_string(), value }
+
+                if self.current != Token::RParen {
+                    panic!("Expected ')' after parameters, got {:?}", self.current);
+                }
+                self.advance(); // consume ')'
+
+                if self.current != Token::LBrace {
+                    panic!("Expected '{{' to start function body, got {:?}", self.current);
+                }
+                self.advance(); // consume '{'
+
+                let body = self.parse_block();
+
+                Stmt::Function {
+                    name,
+                    params,
+                    body: Box::new(body),
+                }
+            }
+
+            Token::Return => {
+                self.advance(); // consume 'return'
+
+                if self.current == Token::Semicolon {
+                    self.advance(); // consume ';'
+                    Stmt::Return(None)
+                } else {
+                    let value = self.parse_expression(Precedence::Lowest);
+                    if self.current != Token::Semicolon {
+                        panic!("Expected ';' after return value, got {:?}", self.current);
+                    }
+                    self.advance(); // consume ';'
+                    Stmt::Return(Some(value))
+                }
+            }
+
+            Token::Identifier { .. } => {
+                if self.next == Token::Equal {
+                    let name = if let Token::Identifier { name } = self.current.clone() {
+                        name
+                    } else {
+                        unreachable!();
+                    };
+                    self.advance(); // consume identifier
+                    self.advance(); // consume '='
+                    let value = self.parse_expression(Precedence::Lowest);
+                    if self.current != Token::Semicolon {
+                        panic!("Expected ';' after assignment, got {:?}", self.current);
+                    }
+                    self.advance(); // consume ';'
+                    Stmt::VarDecl { name, value }
+                } else {
+                    let expr = self.parse_expression(Precedence::Lowest);
+                    if self.current != Token::Semicolon {
+                        panic!("Expected ';' after expression, got {:?}", self.current);
+                    }
+                    self.advance(); // consume ';'
+                    Stmt::ExprStmt(expr)
+                }
+            }
+
+            Token::For => {
+                self.advance(); // consume 'for'
+
+                // expect identifier
+                let var_name = if let Token::Identifier { name } = self.current.clone() {
+                    name
+                } else {
+                    panic!("Expected identifier after 'for', got {:?}", self.current);
+                };
+                self.advance(); // consume identifier
+
+                // expect 'in'
+                if !matches!(self.current, Token::In) {
+                    panic!("Expected 'in' after variable name in for loop, got {:?}", self.current);
+                }
+                self.advance(); // consume 'in'
+
+                // Handle range expression directly
+                let range = self.parse_expression(Precedence::Lowest);
+                // expect '{'
+                if !matches!(self.current, Token::LBrace) {
+                    panic!("Expected '{{' after for loop header, got {:?}", self.current);
+                }
+                self.advance(); // consume '{'
+
+                let body = Box::new(self.parse_block());
+
+                Stmt::ForStmt {
+                    var_name,
+                    range,
+                    body,
+                }
             }
 
             Token::If | Token::Elif => {
@@ -155,7 +254,6 @@ impl Parser {
 
     /// Parses an expression with precedence climbing
     pub fn parse_expression(&mut self, prec: Precedence) -> Expr {
-        println!("Current: {:?}", self.current);
         let mut left = match &self.current {
             
             Token::Number(n) => {
@@ -178,6 +276,23 @@ impl Parser {
                 self.advance();
                 expr
             }
+            Token::Range => {
+                self.advance(); // consume 'range'
+                if self.current != Token::LParen {
+                    panic!("Expected '(' after 'range', got {:?}", self.current);
+                }
+                self.advance(); // consume '('
+                let arg = self.parse_expression(Precedence::Lowest);
+                if self.current != Token::RParen {
+                    panic!("Expected ')' after range argument, got {:?}", self.current);
+                }
+                self.advance(); // consume ')'
+                Expr::Binary {
+                    left: Box::new(arg),
+                    op: Token::Range,
+                    right: Box::new(Expr::Number(0)), // Dummy right operand consumed in evaluator
+                }
+            }
             Token::LParen => {
                 self.advance();
                 let expr = self.parse_expression(Precedence::Lowest);
@@ -198,9 +313,17 @@ impl Parser {
                 expr
             }
             Token::Identifier { name } => {
-                let expr = Expr::Var(name.clone());
-                self.advance();
-                expr
+                let name_clone = name.clone();
+                self.advance(); // consume identifier
+                if self.current == Token::LParen {
+                    let arguments = self.parse_call_arguments();
+                    Expr::Call {
+                        callee: name_clone,
+                        arguments,
+                    }
+                } else {
+                    Expr::Var(name_clone)
+                }
             }
             other => panic!("Unexpected token in expression: {:?}", other),
         };
@@ -208,7 +331,6 @@ impl Parser {
         // precedence loop
         while self.current != Token::EOF && precedence(&self.current) > prec {
             let op = self.current.clone();
-            // println!("Current operator: {:?}", op);
             self.advance();
             let right = self.parse_expression(precedence(&op));
             left = Expr::Binary {
@@ -219,6 +341,34 @@ impl Parser {
         }
 
         left
+    }
+
+    fn parse_call_arguments(&mut self) -> Vec<Expr> {
+        if self.current != Token::LParen {
+            panic!("Expected '(' to start argument list, got {:?}", self.current);
+        }
+        self.advance(); // consume '('
+
+        let mut arguments = Vec::new();
+        if self.current != Token::RParen {
+            loop {
+                let arg = self.parse_expression(Precedence::Lowest);
+                arguments.push(arg);
+
+                if self.current == Token::Comma {
+                    self.advance(); // consume ','
+                    continue;
+                }
+                break;
+            }
+        }
+
+        if self.current != Token::RParen {
+            panic!("Expected ')' after arguments, got {:?}", self.current);
+        }
+        self.advance(); // consume ')'
+
+        arguments
     }
 
     /// Parse a block of statements until closing brace
@@ -242,9 +392,7 @@ impl Parser {
         let mut stmts = Vec::new();
         while self.current != Token::EOF {
             stmts.push(self.parse_stmt());
-            println!("total stmts {:?}", stmts);
         }
-        println!("Finished parsing, stmts: {:?}", stmts);
         stmts
     }
 }
