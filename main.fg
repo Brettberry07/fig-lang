@@ -1,0 +1,41 @@
+# custom interpreted programming language called fig
+fn add(a, b) {
+    return a + b;
+}
+
+fn main() {
+var x = 5;
+x = 2 + x * (6/2);
+print("x" + "y");
+
+print(add(3, 4));
+
+if (x > 3) {
+    var t = 10;
+    if (x > 4) {
+        print("x is greater than 4");
+        print(t);
+    }
+    print("x is greater than 3");
+} elif (x == 2) {
+    print("x is equal to 2");
+} elif (x == 1) {
+    print("x is equal to 1");
+}
+else {
+    print("x is not greater than 3");
+}
+
+for i in range(3) {
+    var z = 3 + i;
+    print(z);
+}
+
+# print("owiefhoewf");
+print("Done inside main");
+}
+
+print("about to run main");
+main();
+print("Done with file");
+
