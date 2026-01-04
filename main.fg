@@ -3,6 +3,7 @@ fn add(a, b) {
     return a + b;
 }
 
+fn main() {
 var x = 5;
 x = 2 + x * (6/2);
 print("x" + "y");
@@ -10,10 +11,10 @@ print("x" + "y");
 print(add(3, 4));
 
 if (x > 3) {
-    var z = 10;
+    var t = 10;
     if (x > 4) {
         print("x is greater than 4");
-        print(z);
+        print(t);
     }
     print("x is greater than 3");
 } elif (x == 2) {
@@ -31,4 +32,10 @@ for i in range(3) {
 }
 
 # print("owiefhoewf");
-print("Done");
+print("Done inside main");
+}
+
+print("about to run main");
+main();
+print("Done with file");
+
